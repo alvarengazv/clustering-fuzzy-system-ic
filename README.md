@@ -41,7 +41,7 @@ Neste repositório você encontrará o código fonte do projeto, bem como os dad
 De uma forma compacta e organizada, os arquivos e diretórios estão dispostos da seguinte forma:
 
   ```.
-fraud-detection-ic/ 
+clustering-fuzzy-system-ic/ 
     ├── datasets/
     │   └── base_sintetica_media.csv
     ├── src/
