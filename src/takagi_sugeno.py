@@ -73,7 +73,7 @@ class TakagiSugenoClassifier:
             max_iter=self.max_iter_fcm,
             random_state=self.random_state
         )
-        self.fcm_.fit(X)
+        self.fcm_.fit(X, y)
         print(f"  [FCM] Convergiu em {self.fcm_.n_iter_} iterações.")
         print(self.fcm_.summary())
 

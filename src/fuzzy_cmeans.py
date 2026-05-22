@@ -103,14 +103,16 @@ class FuzzyCMeans:
         sigmas = np.maximum(sigmas, 1e-6)
         return sigmas
 
-    def fit(self, X: np.ndarray) -> 'FuzzyCMeans':
+    def fit(self, X: np.ndarray, y: np.ndarray = None) -> 'FuzzyCMeans':
         """
         Executa o algoritmo FCM.
 
         Parâmetros
         ----------
         X : np.ndarray de forma (n_samples, n_features)
-            Dados de entrada (apenas atributos, sem classe).
+            Dados de entrada.
+        y : np.ndarray de forma (n_samples,) ou None, opcional
+            Rótulos das classes para inicialização supervisionada (centros ótimos iniciais).
 
         Retorna
         -------
@@ -118,8 +120,23 @@ class FuzzyCMeans:
         """
         n_samples, n_features = X.shape
 
-        # Inicializar U
-        U = self._init_membership(n_samples)
+        if y is not None:
+            # FCM Supervisionado: calcula centros ótimos iniciais como as médias das classes
+            classes = np.unique(y)
+            centers = np.zeros((self.n_clusters, n_features))
+            for i in range(self.n_clusters):
+                # Se o número de classes for diferente de n_clusters, faz mapeamento cíclico
+                cls = classes[i % len(classes)]
+                X_cls = X[y == cls]
+                if len(X_cls) > 0:
+                    centers[i] = X_cls.mean(axis=0)
+                else:
+                    centers[i] = X.mean(axis=0) + np.random.normal(0, 0.1, n_features)
+            # Inicializa a matriz U de pertinência com base nos centros iniciais
+            U = self._update_membership(X, centers)
+        else:
+            # FCM Não Supervisionado: inicialização tradicional aleatória
+            U = self._init_membership(n_samples)
 
         for iteration in range(1, self.max_iter + 1):
             # Atualizar centros

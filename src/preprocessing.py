@@ -6,6 +6,7 @@
 import pandas as pd
 import numpy as np
 import os
+from imblearn.over_sampling import SMOTE
 
 # Get the current file path
 current_file_path = os.path.abspath(__file__)
@@ -43,11 +44,42 @@ def normalizar_atributos(df: pd.DataFrame):
     df = pd.concat([df_to_normalize, df[[COL_CLASSE]]], axis=1)
     return df
 
+from imblearn.under_sampling import RandomUnderSampler
+from imblearn.combine import SMOTEENN
+
+def aplicar_balanceamento(df: pd.DataFrame):
+    """
+    Aplica técnicas de balanceamento. 
+    Você pode comentar/descomentar a técnica que deseja testar.
+    """
+    X = df.drop(columns=[COL_CLASSE])
+    y = df[COL_CLASSE]
+    
+    # OPÇÃO 1: Undersampling (Reduzir as maiores para igualar à menor - 1000 amostras cada)
+    # Muito útil quando dados sintéticos geram ruído que confunde o C-Means
+    # sampler = RandomUnderSampler(random_state=42)
+    
+    # OPÇÃO 2: SMOTE + ENN (Híbrido)
+    # Ele cria dados sintéticos, mas depois apaga amostras (reais ou falsas) 
+    # que estão nas fronteiras sobrepostas causando confusão (limpa o ruído).
+    # sampler = SMOTEENN(random_state=42)
+    
+    # OPÇÃO 3: ADASYN 
+    # Parecido com SMOTE, mas foca em gerar dados onde a rede tem mais dificuldade.
+    from imblearn.over_sampling import ADASYN
+    sampler = ADASYN(random_state=42)
+
+    X_res, y_res = sampler.fit_resample(X, y)
+    
+    df_res = pd.concat([pd.DataFrame(X_res, columns=X.columns), pd.Series(y_res, name=COL_CLASSE)], axis=1)
+    return df_res
+
 def preprocessing(df: pd.DataFrame):
-    df = remover_atributos(df)
+    # df = remover_atributos(df)
     df = remover_duplicatas(df)
     df = remover_valores_ausentes(df)
     df = normalizar_atributos(df)
+    df = aplicar_balanceamento(df)
     return df
 
 def executar_preprocessing():

@@ -23,7 +23,7 @@ import seaborn as sns
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import (
     accuracy_score, classification_report, confusion_matrix,
-    f1_score, mean_squared_error
+    f1_score, mean_squared_error, balanced_accuracy_score
 )
 
 from fuzzy_cmeans import FuzzyCMeans
@@ -38,7 +38,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATASET_PATH = os.path.join(BASE_DIR, 'dataset', 'base_sintetica_media_preprocessed.csv')
 RESULTS_DIR = os.path.join(BASE_DIR, 'resultados')
 
-ATRIBUTOS = ['atributo_4', 'atributo_5', 'atributo_6']
+ATRIBUTOS = ['atributo_1', 'atributo_2', 'atributo_3', 'atributo_4', 'atributo_5', 'atributo_6']
 COL_CLASSE = 'classe'
 
 # Hiperparâmetros padrão
@@ -54,13 +54,20 @@ RANDOM_STATE = 42
 # ────────────────────────────────────────────────────────────────
 
 def calcular_metricas(y_true, y_pred):
-    """Calcula acurácia, RSE, RMSE e F1-Score."""
+    """Calcula acurácia (micro), acurácia macro (balanced), RSE, RMSE e F1-Score."""
     acc = accuracy_score(y_true, y_pred)
+    acc_macro = balanced_accuracy_score(y_true, y_pred)
     mse = mean_squared_error(y_true, y_pred)
     rmse = np.sqrt(mse)
     rse_val = np.sum((y_true - y_pred) ** 2) / np.sum((y_true - np.mean(y_true)) ** 2)
     f1 = f1_score(y_true, y_pred, average='weighted', zero_division=0)
-    return {'acuracia': acc, 'rse': rse_val, 'rmse': rmse, 'f1_score': f1}
+    return {
+        'acuracia': acc,
+        'acuracia_macro': acc_macro,
+        'rse': rse_val,
+        'rmse': rmse,
+        'f1_score': f1
+    }
 
 
 # ────────────────────────────────────────────────────────────────
@@ -132,8 +139,8 @@ def cross_validation(X, y, n_rules=N_RULES, m=M_FUZZ, verbose=True):
         if verbose:
             print(f"\n  Fold {fold_idx}/{N_FOLDS}:")
             print(f"    Treino: {len(train_idx):,} | Teste: {len(test_idx):,}")
-            print(f"    Acurácia: {metricas['acuracia']:.4f} | RSE: {metricas['rse']:.4f} "
-                  f"| RMSE: {metricas['rmse']:.4f} | F1: {metricas['f1_score']:.4f}")
+            print(f"    Acurácia (micro): {metricas['acuracia']:.4f} | Acurácia (macro): {metricas['acuracia_macro']:.4f} "
+                  f"| RSE: {metricas['rse']:.4f} | RMSE: {metricas['rmse']:.4f} | F1: {metricas['f1_score']:.4f}")
 
         if metricas['acuracia'] > melhor_acc:
             melhor_acc = metricas['acuracia']
@@ -149,10 +156,11 @@ def cross_validation(X, y, n_rules=N_RULES, m=M_FUZZ, verbose=True):
         print(f"\n  {'─'*50}")
         print(f"  RESULTADOS MÉDIOS ({N_FOLDS} folds):")
         print(f"  {'─'*50}")
-        print(f"    Acurácia : {medias['acuracia']:.4f} ± {desvios['acuracia']:.4f}")
-        print(f"    RSE      : {medias['rse']:.4f} ± {desvios['rse']:.4f}")
-        print(f"    RMSE     : {medias['rmse']:.4f} ± {desvios['rmse']:.4f}")
-        print(f"    F1-Score : {medias['f1_score']:.4f} ± {desvios['f1_score']:.4f}")
+        print(f"    Acurácia (micro): {medias['acuracia']:.4f} ± {desvios['acuracia']:.4f}")
+        print(f"    Acurácia (macro): {medias['acuracia_macro']:.4f} ± {desvios['acuracia_macro']:.4f}")
+        print(f"    RSE             : {medias['rse']:.4f} ± {desvios['rse']:.4f}")
+        print(f"    RMSE            : {medias['rmse']:.4f} ± {desvios['rmse']:.4f}")
+        print(f"    F1-Score        : {medias['f1_score']:.4f} ± {desvios['f1_score']:.4f}")
 
     # Relatório e matriz de confusão do melhor fold
     if verbose:
@@ -294,7 +302,7 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, cm_total):
     ax1.set_xlabel(ATRIBUTOS[0]); ax1.set_ylabel(ATRIBUTOS[1]); ax1.set_zlabel(ATRIBUTOS[2])
     ax1.set_title('Classes Reais (3D)', fontweight='bold')
     for center in modelo.fcm_.centers_:
-        ax1.scatter(*center, c='black', marker='X', s=100, edgecolors='white', linewidths=1)
+        ax1.scatter(*center[:3], c='black', marker='X', s=100, edgecolors='white', linewidths=1)
 
     ax2 = fig.add_subplot(122, projection='3d')
     ax2.scatter(X_test[:, 0], X_test[:, 1], X_test[:, 2],
@@ -302,7 +310,7 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, cm_total):
     ax2.set_xlabel(ATRIBUTOS[0]); ax2.set_ylabel(ATRIBUTOS[1]); ax2.set_zlabel(ATRIBUTOS[2])
     ax2.set_title('Classes Preditas (3D)', fontweight='bold')
     for center in modelo.fcm_.centers_:
-        ax2.scatter(*center, c='black', marker='X', s=100, edgecolors='white', linewidths=1)
+        ax2.scatter(*center[:3], c='black', marker='X', s=100, edgecolors='white', linewidths=1)
 
     plt.suptitle('Visualização 3D — Real vs Predito', fontsize=14, fontweight='bold')
     plt.tight_layout()
@@ -321,72 +329,54 @@ def experimentar_hiperparametros(X, y):
 
     resultados = []
 
-    # Variação do número de regras
-    print(f"\n  ── Variação do número de regras (m={M_FUZZ}) ──")
-    print(f"    {'n_rules':>7} | {'Acurácia':>10} | {'RSE':>10} | {'RMSE':>10} | {'F1':>10}")
-    print(f"    {'─'*60}")
-    for n_rules in [2, 3, 4, 5, 6, 8]:
-        medias, desvios, _, _, _ = cross_validation(X, y, n_rules=n_rules, m=M_FUZZ, verbose=False)
-        resultados.append({
-            'n_rules': n_rules, 'm': M_FUZZ,
-            'acuracia': medias['acuracia'], 'rse': medias['rse'],
-            'rmse': medias['rmse'], 'f1_score': medias['f1_score'],
-            'acuracia_std': desvios['acuracia'], 'rse_std': desvios['rse'],
-            'rmse_std': desvios['rmse'], 'f1_std': desvios['f1_score']
-        })
-        m = medias
-        print(f"    {n_rules:>7} | {m['acuracia']:>10.4f} | {m['rse']:>10.4f} | "
-              f"{m['rmse']:>10.4f} | {m['f1_score']:>10.4f}")
-
-    # Variação do expoente de fuzzificação
+    # Variação do expoente de fuzzificação (n_rules=4)
     print(f"\n  ── Variação do expoente m (n_rules={N_RULES}) ──")
-    print(f"    {'m':>7} | {'Acurácia':>10} | {'RSE':>10} | {'RMSE':>10} | {'F1':>10}")
+    print(f"    {'m':>7} | {'Acc micro':>10} | {'Acc macro':>10} | {'RSE':>10} | {'RMSE':>10} | {'F1':>10}")
     print(f"    {'─'*60}")
-    for m_val in [1.5, 2.0, 2.5, 3.0, 3.5]:
+    for m_val in [1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.5, 4.0]:
         medias, desvios, _, _, _ = cross_validation(X, y, n_rules=N_RULES, m=m_val, verbose=False)
         resultados.append({
             'n_rules': N_RULES, 'm': m_val,
-            'acuracia': medias['acuracia'], 'rse': medias['rse'],
-            'rmse': medias['rmse'], 'f1_score': medias['f1_score'],
-            'acuracia_std': desvios['acuracia'], 'rse_std': desvios['rse'],
-            'rmse_std': desvios['rmse'], 'f1_std': desvios['f1_score']
+            'acuracia': medias['acuracia'], 'acuracia_macro': medias['acuracia_macro'],
+            'rse': medias['rse'], 'rmse': medias['rmse'], 'f1_score': medias['f1_score'],
+            'acuracia_std': desvios['acuracia'], 'acuracia_macro_std': desvios['acuracia_macro'],
+            'rse_std': desvios['rse'], 'rmse_std': desvios['rmse'], 'f1_std': desvios['f1_score']
         })
         m = medias
-        print(f"    {m_val:>7.1f} | {m['acuracia']:>10.4f} | {m['rse']:>10.4f} | "
+        print(f"    {m_val:>7.1f} | {m['acuracia']:>10.4f} | {m['acuracia_macro']:>10.4f} | {m['rse']:>10.4f} | "
               f"{m['rmse']:>10.4f} | {m['f1_score']:>10.4f}")
 
     # Plotar resultados
     os.makedirs(RESULTS_DIR, exist_ok=True)
     df_res = pd.DataFrame(resultados)
     metricas_plot = [
-        ('acuracia', 'Acurácia', '#3498db'),
+        ('acuracia', 'Acurácia (micro)', '#3498db'),
+        ('acuracia_macro', 'Acurácia (macro)', '#9b59b6'),
         ('rse', 'RSE', '#e74c3c'),
         ('rmse', 'RMSE', '#2ecc71'),
         ('f1_score', 'F1-Score', '#f39c12')
     ]
 
-    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+    fig, axes = plt.subplots(2, 3, figsize=(18, 12))
     axes = axes.flatten()
 
-    # Gráficos para variação de n_rules
-    df_rules = df_res[df_res['m'] == M_FUZZ]
+    df_m = df_res[df_res['n_rules'] == N_RULES]
     for idx, (col, label, color) in enumerate(metricas_plot):
         ax = axes[idx]
-        ax.plot(df_rules['n_rules'], df_rules[col], 'o-', color=color,
-                linewidth=2, markersize=8, label=f'{label} (n_rules)')
-        ax.fill_between(df_rules['n_rules'],
-                        df_rules[col] - df_rules.get(f'{col}_std', 0),
-                        df_rules[col] + df_rules.get(f'{col}_std', 0),
+        ax.plot(df_m['m'], df_m[col], 'o-', color=color,
+                linewidth=2, markersize=8, label=label)
+        ax.fill_between(df_m['m'],
+                        df_m[col] - df_m.get(f'{col}_std', 0),
+                        df_m[col] + df_m.get(f'{col}_std', 0),
                         alpha=0.15, color=color)
-        # Sobrepor variação de m
-        df_m = df_res[df_res['n_rules'] == N_RULES]
-        ax.plot(df_m['m'], df_m[col], 's--', color=color, alpha=0.5,
-                linewidth=2, markersize=8, label=f'{label} (m)')
-        ax.set_xlabel('Hiperparâmetro', fontsize=11)
+        ax.set_xlabel('Expoente de Fuzzificação (m)', fontsize=11)
         ax.set_ylabel(label, fontsize=11)
-        ax.set_title(f'{label} vs Hiperparâmetros', fontsize=12, fontweight='bold')
+        ax.set_title(f'{label} vs Expoente m (n_rules={N_RULES})', fontsize=12, fontweight='bold')
         ax.legend(fontsize=9)
         ax.grid(True, alpha=0.3)
+
+    # Ocultar o último subplot (pois temos 5 plots em um grid de 2x3)
+    axes[5].set_visible(False)
 
     plt.suptitle(f'Análise de Sensibilidade ({N_FOLDS}-Fold CV)',
                  fontsize=14, fontweight='bold', y=1.02)
@@ -396,27 +386,17 @@ def experimentar_hiperparametros(X, y):
     plt.close()
     print(f"\n  [Gráfico] Análise de hiperparâmetros salva em: {path_hp}")
 
-    # Gráfico consolidado: n_rules
-    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+    # Gráfico consolidado: todas as métricas vs m
+    fig, ax = plt.subplots(figsize=(10, 6))
 
     for col, label, color in metricas_plot:
-        axes[0].plot(df_rules['n_rules'], df_rules[col], 'o-',
-                     linewidth=2, markersize=8, label=label, color=color)
-    axes[0].set_xlabel('Número de Regras', fontsize=11)
-    axes[0].set_ylabel('Valor da Métrica', fontsize=11)
-    axes[0].set_title(f'Métricas vs Nº de Regras (m={M_FUZZ})', fontsize=12, fontweight='bold')
-    axes[0].legend(fontsize=10)
-    axes[0].grid(True, alpha=0.3)
-
-    df_m = df_res[df_res['n_rules'] == N_RULES]
-    for col, label, color in metricas_plot:
-        axes[1].plot(df_m['m'], df_m[col], 'o-',
-                     linewidth=2, markersize=8, label=label, color=color)
-    axes[1].set_xlabel('Expoente de Fuzzificação (m)', fontsize=11)
-    axes[1].set_ylabel('Valor da Métrica', fontsize=11)
-    axes[1].set_title(f'Métricas vs Expoente m (n_rules={N_RULES})', fontsize=12, fontweight='bold')
-    axes[1].legend(fontsize=10)
-    axes[1].grid(True, alpha=0.3)
+        ax.plot(df_m['m'], df_m[col], 'o-',
+                linewidth=2, markersize=8, label=label, color=color)
+    ax.set_xlabel('Expoente de Fuzzificação (m)', fontsize=11)
+    ax.set_ylabel('Valor da Métrica', fontsize=11)
+    ax.set_title(f'Comparação de Métricas vs Expoente m (n_rules={N_RULES})', fontsize=12, fontweight='bold')
+    ax.legend(fontsize=10)
+    ax.grid(True, alpha=0.3)
 
     plt.suptitle(f'Comparação Consolidada ({N_FOLDS}-Fold CV)',
                  fontsize=14, fontweight='bold', y=1.02)
@@ -463,10 +443,11 @@ def main():
     print(f"  Validação: {N_FOLDS}-Fold Cross-Validation (80/20)")
     print(f"  Configuração: {N_RULES} regras, m={M_FUZZ}")
     print(f"\n  Métricas médias ({N_FOLDS} folds):")
-    print(f"    Acurácia : {medias['acuracia']:.4f} ± {desvios['acuracia']:.4f}")
-    print(f"    RSE      : {medias['rse']:.4f} ± {desvios['rse']:.4f}")
-    print(f"    RMSE     : {medias['rmse']:.4f} ± {desvios['rmse']:.4f}")
-    print(f"    F1-Score : {medias['f1_score']:.4f} ± {desvios['f1_score']:.4f}")
+    print(f"    Acurácia (micro): {medias['acuracia']:.4f} ± {desvios['acuracia']:.4f}")
+    print(f"    Acurácia (macro): {medias['acuracia_macro']:.4f} ± {desvios['acuracia_macro']:.4f}")
+    print(f"    RSE             : {medias['rse']:.4f} ± {desvios['rse']:.4f}")
+    print(f"    RMSE            : {medias['rmse']:.4f} ± {desvios['rmse']:.4f}")
+    print(f"    F1-Score        : {medias['f1_score']:.4f} ± {desvios['f1_score']:.4f}")
     print(f"\n  Gráficos salvos em: {RESULTS_DIR}/")
     print(f"\n{'═'*60}\n")
 
