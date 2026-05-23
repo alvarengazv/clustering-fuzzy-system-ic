@@ -45,11 +45,20 @@ clustering-fuzzy-system-ic/
     ├── datasets/
     │   └── base_sintetica_media.csv
     ├── src/
+    │   ├── data/
+    │   │   ├── loader.py   
+    │   │   └── preprocessing.py            
     │   ├── eda/
-    │   │   ├── eda.py
+    │   │   └── eda.py               
+    │   ├── models/
+    │   │   ├── fuzzy_cmeans.py            
+    │   │   └── takagi_sugeno.py
+    │   ├── utils/
+    │   │   ├── metrics.py
     │   │   └── plots.py
-    │   ├── main.py
-    │   └── preprocessing.py
+    │   ├── config.py
+    │   ├── experiments.py
+    │   └── main.py
     ├── .gitignore
     ├── README.md
     └── requirements.txt
