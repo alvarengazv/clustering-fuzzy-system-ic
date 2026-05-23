@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 from config import *
+import config
 
 # Generate plots for analysis
 def plotar_resultados(modelo, X_test, y_test, y_pred_test, cm_total):
@@ -33,7 +34,8 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, cm_total):
     path_cm = os.path.join(RESULTS_DIR, 'matriz_confusao.png')
     plt.savefig(path_cm, dpi=150)
     plt.close()
-    print(f"\n  [Gráfico] Matriz de confusão salva em: {path_cm}")
+    if config.PRINT_OPTION:
+        print(f"\n  [Gráfico] Matriz de confusão salva em: {path_cm}")
 
     # ── 2. Dispersão 2D — real vs predito ──
     fig, axes = plt.subplots(1, 2, figsize=(16, 6))
@@ -67,7 +69,8 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, cm_total):
     path_scatter = os.path.join(RESULTS_DIR, 'dispersao_real_vs_predito.png')
     plt.savefig(path_scatter, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"  [Gráfico] Dispersão real vs predito salva em: {path_scatter}")
+    if config.PRINT_OPTION:
+        print(f"  [Gráfico] Dispersão real vs predito salva em: {path_scatter}")
 
     # ── 3. Funções de pertinência Gaussianas ──
     fig, axes = plt.subplots(1, len(ATRIBUTOS), figsize=(6 * len(ATRIBUTOS), 5))
@@ -98,7 +101,8 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, cm_total):
     path_mf = os.path.join(RESULTS_DIR, 'funcoes_pertinencia.png')
     plt.savefig(path_mf, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"  [Gráfico] Funções de pertinência salvas em: {path_mf}")
+    if config.PRINT_OPTION:
+        print(f"  [Gráfico] Funções de pertinência salvas em: {path_mf}")
 
     # ── 4. Dispersão 3D ──
     fig = plt.figure(figsize=(16, 6))
@@ -123,5 +127,6 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, cm_total):
     path_3d = os.path.join(RESULTS_DIR, 'dispersao_3d.png')
     plt.savefig(path_3d, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"  [Gráfico] Dispersão 3D salva em: {path_3d}")
+    if config.PRINT_OPTION:
+        print(f"  [Gráfico] Dispersão 3D salva em: {path_3d}")
 

@@ -3,7 +3,9 @@ import os
 from config import *
 
 def separador(titulo: str):
-    print(f"\n  -- {titulo} ---------------")
+    print(f"\n  {'='*58}")
+    print(f"  {titulo}")
+    print(f"  {'='*58}")
     
 def classificar_atributo(serie: pd.Series) -> str:
     serie = serie.dropna()
@@ -35,42 +37,36 @@ def classificar_atributo(serie: pd.Series) -> str:
 
 
 def informacoes(df: pd.DataFrame):
-    # Get the columns of the dataset
-    print(f"The columns of the dataset are: {df.columns.tolist()}")
+    separador("INFORMAÇÕES BÁSICAS")
+    
+    print(f"\n  Colunas do dataset : {', '.join(df.columns.tolist())}")
+    print(f"  Número de amostras : {df.shape[0]:,}")
+    
+    print("\n  Distribuição das classes:")
+    vc = df[COL_CLASSE].value_counts().sort_index()
+    for cls, count in vc.items():
+        print(f"    Classe {cls}: {count:>6,} amostras")
 
-    # Get the class distribution
-    print(f"The class distribution is: \n {df[COL_CLASSE].value_counts().sort_index()}")
+    print("\n  Estatísticas Descritivas (Resumo):")
+    desc = df.describe().to_string()
+    for line in desc.split('\n'):
+        print(f"    {line}")
 
-    # Get the descriptive statistics of the dataset
-    print(f"The descriptive statistics of the dataset are: \n {df.describe()}")
-
-    # Get the number of samples in the dataset
-    print(f"The number of samples in the dataset is: {df.shape[0]}")
-
-    # Check if it has any missing values
     missing_values_columns = df.isnull().sum()
     missing_values_columns = missing_values_columns[missing_values_columns > 0]
-    print(f"The number of missing values in each column is:\n{missing_values_columns}")
-
-    # Get the percentage of missing values in each column
-    missing_values_percentage = missing_values_columns / df.shape[0] * 100
-    print(f"The percentage of missing values in each column is:\n{missing_values_percentage}")
-
-    # Get the lines with missing values
-    missing_values_lines = df[df.isnull().any(axis=1)]
-    print(f"The lines with missing values are:\n{missing_values_lines}")
-
-    # How much lines has missing values
-    print(f"The number of lines with missing values is: {missing_values_lines.shape[0]}")
-
-    # How much lines doesn't have missing values
-    print(f"The number of lines without missing values is: {df.shape[0] - missing_values_lines.shape[0]}")
-
-    # How much lines per class with missing values
-    if not missing_values_lines.empty:
-        print(f"The number of lines per class with missing values is:\n{missing_values_lines['classe'].value_counts().sort_index()}")
+    
+    if len(missing_values_columns) > 0:
+        print(f"\n  Valores Ausentes por Coluna:")
+        missing_values_percentage = missing_values_columns / df.shape[0] * 100
+        for col, count in missing_values_columns.items():
+            pct = missing_values_percentage[col]
+            print(f"    {col:<15}: {count:>5} ({pct:.2f}%)")
+            
+        missing_values_lines = df[df.isnull().any(axis=1)]
+        print(f"\n  Linhas com valores ausentes : {missing_values_lines.shape[0]:,}")
+        print(f"  Linhas completas            : {df.shape[0] - missing_values_lines.shape[0]:,}")
     else:
-        print("No lines with missing values per class.")
+        print("\n  Valores Ausentes: Nenhum valor ausente encontrado.")
 
 def caracterizacao(df: pd.DataFrame):
     separador("CARACTERIZAÇÃO GERAL DO DATASET")
@@ -332,8 +328,13 @@ def executar_eda():
 
 # Option to run the eda
 def eda_option():
+    import config
+    if not config.PRINT_OPTION:
+        return
+        
     choice = input("Deseja rodar a EDA (Análise Exploratória de Dados)? (s/n): ")
     if choice.lower() == 's':
         executar_eda()
+        input("\n[Pressione Enter para continuar...]")
     else:
         print("EDA não executada.")

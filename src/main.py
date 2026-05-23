@@ -28,19 +28,22 @@ def print_option():
 
 # Loading dataset and separate X and y
 def carregar_dados():
-    print(f"\n{'='*60}")
-    print(f"  CARREGAMENTO DOS DADOS")
-    print(f"{'='*60}")
+    if config.PRINT_OPTION:
+        print(f"\n{'='*60}")
+        print(f"  CARREGAMENTO DOS DADOS")
+        print(f"{'='*60}")
 
     df = pd.read_csv(DATASET_PREPROCESSED_PATH)
-    print(f"\n  Arquivo   : {os.path.basename(DATASET_PREPROCESSED_PATH)}")
-    print(f"  Amostras  : {df.shape[0]:,}")
-    print(f"  Atributos : {ATRIBUTOS}")
-    print(f"  Classes   : {sorted(df[COL_CLASSE].unique())}")
-    print(f"\n  Distribuição das classes:")
-    for cls in sorted(df[COL_CLASSE].unique()):
-        n = (df[COL_CLASSE] == cls).sum()
-        print(f"    Classe {cls}: {n:>5,} ({n/len(df)*100:.1f}%)")
+    
+    if config.PRINT_OPTION:
+        print(f"\n  Arquivo   : {os.path.basename(DATASET_PREPROCESSED_PATH)}")
+        print(f"  Amostras  : {df.shape[0]:,}")
+        print(f"  Atributos : {ATRIBUTOS}")
+        print(f"  Classes   : {sorted(df[COL_CLASSE].unique())}")
+        print(f"\n  Distribuição das classes:")
+        for cls in sorted(df[COL_CLASSE].unique()):
+            n = (df[COL_CLASSE] == cls).sum()
+            print(f"    Classe {cls}: {n:>5,} ({n/len(df)*100:.1f}%)")
 
     X = df[ATRIBUTOS].values
     y = df[COL_CLASSE].values
@@ -55,17 +58,18 @@ def main():
     print("  SISTEMA FUZZY: FCM + TAKAGI-SUGENO PARA CLASSIFICAÇÃO")
     print("═" * 60)
 
+    # Option of print
+    print_option()
+
     # Preprocessing
     preprocessing_option()
 
     # EDA
     eda_option()
 
-    # Option of print
-    print_option()
-
-    # Clear the terminal
-    clear_terminal()
+    if config.PRINT_OPTION:
+        # Clear the terminal again if we want to clean up prompts
+        clear_terminal()
 
     # Loading data
     X, y, df = carregar_dados()

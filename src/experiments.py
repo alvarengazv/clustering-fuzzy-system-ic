@@ -8,21 +8,22 @@ from utils.metrics import *
 
 
 def experimentar_hiperparametros(X, y):
-    print(f"\n{'='*60}")
-    print(f"  ANÁLISE DE SENSIBILIDADE DOS HIPERPARÂMETROS")
-    print(f"  (Cross-validation {N_FOLDS}-fold para cada configuração)")
-    print(f"{'='*60}")
-
-    resultados = []
-
-    # Variação do expoente de fuzzificação (n_rules=4)
-    print(f"\n  ── Variação do expoente m (n_rules={N_RULES}) ──")
-    print(f"    {'m':>7} | {'Acc micro':>10} | {'Acc macro':>10} | {'RSE':>10} | {'RMSE':>10} | {'F1':>10}")
-    print(f"    {'─'*60}")
-    
-    # Store original print option and turn it off for the loop
+    import config
     original_print_option = config.PRINT_OPTION
+    
+    if original_print_option:
+        print(f"\n{'='*60}")
+        print(f"  ANÁLISE DE SENSIBILIDADE DOS HIPERPARÂMETROS")
+        print(f"  (Cross-validation {N_FOLDS}-fold para cada configuração)")
+        print(f"{'='*60}")
+        print(f"\n  ── Variação do expoente m (n_rules={N_RULES}) ──")
+        print(f"    {'m':>7} | {'Acc micro':>10} | {'Acc macro':>10} | {'RSE':>10} | {'RMSE':>10} | {'F1':>10}")
+        print(f"    {'─'*60}")
+    
+    # Turn it off for the loop
     config.PRINT_OPTION = False
+    
+    resultados = []
     
     for m_val in [1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.5, 4.0]:
         medias, desvios, _, _, _ = cross_validation(X, y, n_rules=N_RULES, m=m_val)
@@ -34,8 +35,9 @@ def experimentar_hiperparametros(X, y):
             'rse_std': desvios['rse'], 'rmse_std': desvios['rmse'], 'f1_std': desvios['f1_score']
         })
         m = medias
-        print(f"    {m_val:>7.1f} | {m['acuracia']:>10.4f} | {m['acuracia_macro']:>10.4f} | {m['rse']:>10.4f} | "
-              f"{m['rmse']:>10.4f} | {m['f1_score']:>10.4f}")
+        if original_print_option:
+            print(f"    {m_val:>7.1f} | {m['acuracia']:>10.4f} | {m['acuracia_macro']:>10.4f} | {m['rse']:>10.4f} | "
+                  f"{m['rmse']:>10.4f} | {m['f1_score']:>10.4f}")
               
     # Restore print option
     config.PRINT_OPTION = original_print_option

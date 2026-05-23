@@ -49,6 +49,12 @@ def executar_preprocessing():
 
 # Option to run the preprocessing (only appears if the base_sintetica_media_processed.csv file exists)
 def preprocessing_option():
+    import config
+    if not config.PRINT_OPTION:
+        if not os.path.exists(DATASET_PREPROCESSED_PATH):
+            executar_preprocessing()
+        return
+
     if os.path.exists(DATASET_RAW_PATH):
         if os.path.exists(DATASET_PREPROCESSED_PATH):
             print("O arquivo base_sintetica_media_preprocessed.csv já existe.")

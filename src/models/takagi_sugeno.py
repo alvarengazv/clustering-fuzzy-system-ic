@@ -1,5 +1,6 @@
 import numpy as np
 from models.fuzzy_cmeans import FuzzyCMeans
+import config
 
 # Takagi-Sugeno classifier
 class TakagiSugenoClassifier:
@@ -26,7 +27,8 @@ class TakagiSugenoClassifier:
         self.n_classes_ = len(self.classes_)
 
         # Fuzzy C-Means (FCM)
-        print(f"\n  [FCM] Executando Fuzzy C-Means com {self.n_rules} clusters...")
+        if config.PRINT_OPTION:
+            print(f"\n  [FCM] Executando Fuzzy C-Means com {self.n_rules} clusters...")
         self.fcm_ = FuzzyCMeans(
             n_clusters=self.n_rules,
             m=self.m,
@@ -34,8 +36,9 @@ class TakagiSugenoClassifier:
             random_state=self.random_state
         )
         self.fcm_.fit(X, y)
-        print(f"  [FCM] Convergiu em {self.fcm_.n_iter_} iterações.")
-        print(self.fcm_.summary())
+        if config.PRINT_OPTION:
+            print(f"  [FCM] Convergiu em {self.fcm_.n_iter_} iterações.")
+            print(self.fcm_.summary())
 
         # Calculate firing strengths (W)
         W = self.fcm_.get_firing_strengths(X)  # (N, R)
@@ -52,7 +55,8 @@ class TakagiSugenoClassifier:
         # Parameters: (n_rules, n_classes, D+1)
         self.consequent_params_ = np.zeros((self.n_rules, self.n_classes_, D_aug))
 
-        print(f"\n  [TS] Estimando parâmetros consequentes ({self.n_rules} regras × {self.n_classes_} classes)...")
+        if config.PRINT_OPTION:
+            print(f"\n  [TS] Estimando parâmetros consequentes ({self.n_rules} regras × {self.n_classes_} classes)...")
 
         for i in range(self.n_rules):
             # Weight of rule i for each sample
@@ -67,10 +71,12 @@ class TakagiSugenoClassifier:
                 params = np.linalg.lstsq(X_w, Y_w, rcond=None)[0]  # (D+1, K)
                 self.consequent_params_[i] = params.T  # (K, D+1)
             except np.linalg.LinAlgError:
-                print(f"    [AVISO] Regra {i}: lstsq falhou, usando zeros.")
+                if config.PRINT_OPTION:
+                    print(f"    [AVISO] Regra {i}: lstsq falhou, usando zeros.")
                 self.consequent_params_[i] = np.zeros((self.n_classes_, D_aug))
 
-        print("  [TS] Treinamento concluído.")
+        if config.PRINT_OPTION:
+            print("  [TS] Treinamento concluído.")
 
         return self
 
@@ -111,6 +117,7 @@ class TakagiSugenoClassifier:
 
     # Method to print the rules
     def print_rules(self, feature_names: list = None):
+        import textwrap
         if feature_names is None:
             feature_names = [f"x{d+1}" for d in range(self.n_features_)]
 
@@ -128,7 +135,11 @@ class TakagiSugenoClassifier:
                 s = self.fcm_.sigmas_[i, d]
                 ante_parts.append(f"{fname} ≈ {c:.4f} (σ={s:.4f})")
             
-            print(f"    SE {' E '.join(ante_parts)}")
+            ante_str = " E ".join(ante_parts)
+            wrapped_ante = textwrap.fill(ante_str, width=100, 
+                                         initial_indent="    SE ", 
+                                         subsequent_indent="       ")
+            print(wrapped_ante)
 
             # Consequent
             for k, cls in enumerate(self.classes_):
@@ -137,6 +148,10 @@ class TakagiSugenoClassifier:
                 for d, fname in enumerate(feature_names):
                     terms.append(f"{params[d+1]:+.4f}·{fname}")
                 eq = " ".join(terms)
-                print(f"    ENTÃO y_classe{cls} = {eq}")
+                
+                wrapped_cons = textwrap.fill(eq, width=100,
+                                             initial_indent=f"    ENTÃO y_classe{cls} = ",
+                                             subsequent_indent="                        ")
+                print(wrapped_cons)
 
         print("\n" + "=" * 60)
