@@ -1,14 +1,13 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
 import config
 from config import *
 from utils.metrics import *
+from utils.plots import plotar_analise_sensibilidade
 
-
+# Analysis of the hyperparameter sensitivity
 def experimentar_hiperparametros(X, y):
-    import config
     original_print_option = config.PRINT_OPTION
     
     if original_print_option:
@@ -43,64 +42,8 @@ def experimentar_hiperparametros(X, y):
     config.PRINT_OPTION = original_print_option
 
     # Plotar resultados
-    os.makedirs(RESULTS_DIR, exist_ok=True)
     df_res = pd.DataFrame(resultados)
-    metricas_plot = [
-        ('acuracia', 'Acurácia (micro)', '#3498db'),
-        ('acuracia_macro', 'Acurácia (macro)', '#9b59b6'),
-        ('rse', 'RSE', '#e74c3c'),
-        ('rmse', 'RMSE', '#2ecc71'),
-        ('f1_score', 'F1-Score', '#f39c12')
-    ]
-
-    fig, axes = plt.subplots(2, 3, figsize=(18, 12))
-    axes = axes.flatten()
-
-    df_m = df_res[df_res['n_rules'] == N_RULES]
-    for idx, (col, label, color) in enumerate(metricas_plot):
-        ax = axes[idx]
-        ax.plot(df_m['m'], df_m[col], 'o-', color=color,
-                linewidth=2, markersize=8, label=label)
-        ax.fill_between(df_m['m'],
-                        df_m[col] - df_m.get(f'{col}_std', 0),
-                        df_m[col] + df_m.get(f'{col}_std', 0),
-                        alpha=0.15, color=color)
-        ax.set_xlabel('Expoente de Fuzzificação (m)', fontsize=11)
-        ax.set_ylabel(label, fontsize=11)
-        ax.set_title(f'{label} vs Expoente m (n_rules={N_RULES})', fontsize=12, fontweight='bold')
-        ax.legend(fontsize=9)
-        ax.grid(True, alpha=0.3)
-
-    # Ocultar o último subplot (pois temos 5 plots em um grid de 2x3)
-    axes[5].set_visible(False)
-
-    plt.suptitle(f'Análise de Sensibilidade ({N_FOLDS}-Fold CV)',
-                 fontsize=14, fontweight='bold', y=1.02)
-    plt.tight_layout()
-    path_hp = os.path.join(RESULTS_DIR, 'analise_hiperparametros.png')
-    plt.savefig(path_hp, dpi=150, bbox_inches='tight')
-    plt.close()
-    print(f"\n  [Gráfico] Análise de hiperparâmetros salva em: {path_hp}")
-
-    # Gráfico consolidado: todas as métricas vs m
-    fig, ax = plt.subplots(figsize=(10, 6))
-
-    for col, label, color in metricas_plot:
-        ax.plot(df_m['m'], df_m[col], 'o-',
-                linewidth=2, markersize=8, label=label, color=color)
-    ax.set_xlabel('Expoente de Fuzzificação (m)', fontsize=11)
-    ax.set_ylabel('Valor da Métrica', fontsize=11)
-    ax.set_title(f'Comparação de Métricas vs Expoente m (n_rules={N_RULES})', fontsize=12, fontweight='bold')
-    ax.legend(fontsize=10)
-    ax.grid(True, alpha=0.3)
-
-    plt.suptitle(f'Comparação Consolidada ({N_FOLDS}-Fold CV)',
-                 fontsize=14, fontweight='bold', y=1.02)
-    plt.tight_layout()
-    path_cons = os.path.join(RESULTS_DIR, 'comparacao_consolidada.png')
-    plt.savefig(path_cons, dpi=150, bbox_inches='tight')
-    plt.close()
-    print(f"  [Gráfico] Comparação consolidada salva em: {path_cons}")
+    plotar_analise_sensibilidade(df_res)
 
     return df_res
 

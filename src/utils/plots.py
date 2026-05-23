@@ -12,7 +12,7 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, cm_total):
     classes = sorted(np.unique(y_test))
     class_labels = [f"Classe {c}" for c in classes]
 
-    # ── 1. Matriz de Confusão em % (Heatmap) ──
+    # Graphic of the confusion matrix
     cm_pct = cm_total.astype(float)
     cm_pct = cm_pct / cm_pct.sum(axis=1, keepdims=True) * 100
 
@@ -23,7 +23,6 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, cm_total):
         ax=ax, linewidths=0.5, vmin=0, vmax=100,
         annot_kws={'size': 12}
     )
-    # Adicionar símbolo % nas anotações
     for text in ax.texts:
         text.set_text(text.get_text() + '%')
     ax.set_xlabel('Classe Predita', fontsize=12)
@@ -37,7 +36,7 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, cm_total):
     if config.PRINT_OPTION:
         print(f"\n  [Gráfico] Matriz de confusão salva em: {path_cm}")
 
-    # ── 2. Dispersão 2D — real vs predito ──
+    # Graphic of the confusion matrix 2d
     fig, axes = plt.subplots(1, 2, figsize=(16, 6))
     scatter1 = axes[0].scatter(
         X_test[:, 0], X_test[:, 1],
@@ -72,7 +71,7 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, cm_total):
     if config.PRINT_OPTION:
         print(f"  [Gráfico] Dispersão real vs predito salva em: {path_scatter}")
 
-    # ── 3. Funções de pertinência Gaussianas ──
+    # Gaussian membership functions
     fig, axes = plt.subplots(1, len(ATRIBUTOS), figsize=(6 * len(ATRIBUTOS), 5))
     if len(ATRIBUTOS) == 1:
         axes = [axes]
@@ -104,7 +103,7 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, cm_total):
     if config.PRINT_OPTION:
         print(f"  [Gráfico] Funções de pertinência salvas em: {path_mf}")
 
-    # ── 4. Dispersão 3D ──
+    # Graphic of the dispersion 3d
     fig = plt.figure(figsize=(16, 6))
     ax1 = fig.add_subplot(121, projection='3d')
     ax1.scatter(X_test[:, 0], X_test[:, 1], X_test[:, 2],
@@ -129,4 +128,67 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, cm_total):
     plt.close()
     if config.PRINT_OPTION:
         print(f"  [Gráfico] Dispersão 3D salva em: {path_3d}")
+
+# Generate plots for hyperparameter sensitivity analysis
+def plotar_analise_sensibilidade(df_res: pd.DataFrame):
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+    metricas_plot = [
+        ('acuracia', 'Acurácia (micro)', '#3498db'),
+        ('acuracia_macro', 'Acurácia (macro)', '#9b59b6'),
+        ('rse', 'RSE', '#e74c3c'),
+        ('rmse', 'RMSE', '#2ecc71'),
+        ('f1_score', 'F1-Score', '#f39c12')
+    ]
+
+    fig, axes = plt.subplots(2, 3, figsize=(18, 12))
+    axes = axes.flatten()
+
+    df_m = df_res[df_res['n_rules'] == N_RULES]
+    for idx, (col, label, color) in enumerate(metricas_plot):
+        ax = axes[idx]
+        ax.plot(df_m['m'], df_m[col], 'o-', color=color,
+                linewidth=2, markersize=8, label=label)
+        ax.fill_between(df_m['m'],
+                        df_m[col] - df_m.get(f'{col}_std', 0),
+                        df_m[col] + df_m.get(f'{col}_std', 0),
+                        alpha=0.15, color=color)
+        ax.set_xlabel('Expoente de Fuzzificação (m)', fontsize=11)
+        ax.set_ylabel(label, fontsize=11)
+        ax.set_title(f'{label} vs Expoente m (n_rules={N_RULES})', fontsize=12, fontweight='bold')
+        ax.legend(fontsize=9)
+        ax.grid(True, alpha=0.3)
+
+    # Hide the last subplot (since we have 5 plots in a 2x3 grid)
+    axes[5].set_visible(False)
+
+    plt.suptitle(f'Análise de Sensibilidade ({N_FOLDS}-Fold CV)',
+                 fontsize=14, fontweight='bold', y=1.02)
+    plt.tight_layout()
+    path_hp = os.path.join(RESULTS_DIR, 'analise_hiperparametros.png')
+    plt.savefig(path_hp, dpi=150, bbox_inches='tight')
+    plt.close()
+    if config.PRINT_OPTION:
+        print(f"\n  [Gráfico] Análise de hiperparâmetros salva em: {path_hp}")
+
+    # Consolidated chart: all metrics vs m
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    for col, label, color in metricas_plot:
+        ax.plot(df_m['m'], df_m[col], 'o-',
+                linewidth=2, markersize=8, label=label, color=color)
+    ax.set_xlabel('Expoente de Fuzzificação (m)', fontsize=11)
+    ax.set_ylabel('Valor da Métrica', fontsize=11)
+    ax.set_title(f'Comparação de Métricas vs Expoente m (n_rules={N_RULES})', fontsize=12, fontweight='bold')
+    ax.legend(fontsize=10)
+    ax.grid(True, alpha=0.3)
+
+    plt.suptitle(f'Comparação Consolidada ({N_FOLDS}-Fold CV)',
+                 fontsize=14, fontweight='bold', y=1.02)
+    plt.tight_layout()
+    path_cons = os.path.join(RESULTS_DIR, 'comparacao_consolidada.png')
+    plt.savefig(path_cons, dpi=150, bbox_inches='tight')
+    plt.close()
+    if config.PRINT_OPTION:
+        print(f"  [Gráfico] Comparação consolidada salva em: {path_cons}")
+
 

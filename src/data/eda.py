@@ -2,11 +2,13 @@ import pandas as pd
 import os
 from config import *
 
+# Separator for titles
 def separador(titulo: str):
     print(f"\n  {'='*58}")
     print(f"  {titulo}")
     print(f"  {'='*58}")
     
+# Classify attributes
 def classificar_atributo(serie: pd.Series) -> str:
     serie = serie.dropna()
     n_unicos = serie.nunique()
@@ -34,8 +36,7 @@ def classificar_atributo(serie: pd.Series) -> str:
 
     return "Desconhecido"
 
-
-
+# Basic information
 def informacoes(df: pd.DataFrame):
     separador("INFORMAÇÕES BÁSICAS")
     
@@ -68,6 +69,7 @@ def informacoes(df: pd.DataFrame):
     else:
         print("\n  Valores Ausentes: Nenhum valor ausente encontrado.")
 
+# General characterization of the dataset
 def caracterizacao(df: pd.DataFrame):
     separador("CARACTERIZAÇÃO GERAL DO DATASET")
 
@@ -98,6 +100,7 @@ def caracterizacao(df: pd.DataFrame):
 
     return df_tax
 
+# Target variable analysis
 def variavel_alvo(df: pd.DataFrame):
     separador(f"ANÁLISE DA VARIÁVEL ALVO - \"{COL_CLASSE}\"")
 
@@ -120,6 +123,7 @@ def variavel_alvo(df: pd.DataFrame):
 
     print("\n\n\n")
 
+# Distribution of numerical attributes
 def distribuicoes_numericas(df: pd.DataFrame):
     separador("DISTRIBUIÇÕES DOS ATRIBUTOS NUMÉRICOS")
 
@@ -166,6 +170,7 @@ def distribuicoes_numericas(df: pd.DataFrame):
 
     print("\n\n\n")
 
+# Data quality
 def qualidade_dados(df: pd.DataFrame):
     separador("QUALIDADE DOS DADOS")
 
@@ -241,6 +246,7 @@ def qualidade_dados(df: pd.DataFrame):
 
     print("\n\n\n")
 
+# Correlations between attributes
 def correlacoes(df: pd.DataFrame):
     separador("CORRELAÇÕES ENTRE ATRIBUTOS")
 
@@ -277,6 +283,7 @@ def correlacoes(df: pd.DataFrame):
 
     print("\n\n\n")
 
+# Synthesis of analysis and action plan
 def sintese_preprocessamento(df: pd.DataFrame):
     separador("SÍNTESE DA ANÁLISE E PLANO DE AÇÃO")
 
@@ -304,8 +311,8 @@ def sintese_preprocessamento(df: pd.DataFrame):
 
     print("\n\n\n")
 
+# Execute EDA
 def executar_eda():
-    # Read the dataset
     df = pd.read_csv(DATASET_RAW_PATH)
 
     print("=" * 60)
@@ -324,7 +331,6 @@ def executar_eda():
     sintese_preprocessamento(df)
 
     print("Análise Exploratória de Dados concluída!")
-
 
 # Option to run the eda
 def eda_option():

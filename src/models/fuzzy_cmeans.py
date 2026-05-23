@@ -2,10 +2,15 @@ import numpy as np
 
 # Fuzzy C-Means (FCM)
 class FuzzyCMeans:
-    # Initialization
-    def __init__(self, n_clusters: int = 4, m: float = 2.0,
-                 max_iter: int = 300, tol: float = 1e-6,
-                 random_state: int = None):
+    
+    # Constructor
+    def __init__(self, 
+                n_clusters: int = 4, 
+                m: float = 2.0,
+                max_iter: int = 300, 
+                tol: float = 1e-6,
+                random_state: int = None        
+            ):
         self.n_clusters = n_clusters
         self.m = m
         self.max_iter = max_iter
