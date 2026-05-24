@@ -338,7 +338,7 @@ def eda_option():
     if not config.PRINT_OPTION:
         return
         
-    choice = input("Deseja rodar a EDA (Análise Exploratória de Dados)? (s/n): ")
+    choice = input("Deseja rodar a EDA (Análise Exploratória de Dados)? (s/n): ").strip()
     if choice.lower() == 's':
         executar_eda()
         input("\n[Pressione Enter para continuar...]")

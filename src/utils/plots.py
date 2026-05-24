@@ -1,12 +1,16 @@
+# pyrefly: ignore [missing-import]
 import numpy as np
+import pandas as pd
+# pyrefly: ignore [missing-import]
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 from config import *
 import config
+from sklearn.metrics import roc_curve, auc
 
 # Generate plots for analysis
-def plotar_resultados(modelo, X_test, y_test, y_pred_test, cm_total):
+def plotar_resultados(modelo, X_test, y_test, y_pred_test, y_pred_proba_test, cm_total):
     os.makedirs(RESULTS_DIR, exist_ok=True)
 
     classes = sorted(np.unique(y_test))
@@ -27,10 +31,11 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, cm_total):
         text.set_text(text.get_text() + '%')
     ax.set_xlabel('Classe Predita', fontsize=12)
     ax.set_ylabel('Classe Real', fontsize=12)
-    ax.set_title(f'Matriz de Confusão (%) — Takagi-Sugeno ({N_FOLDS}-Fold CV)',
+    ax.set_title(f'Matriz de Confusão (%) — Takagi-Sugeno (Holdout 80/20)',
                  fontsize=14, fontweight='bold')
     plt.tight_layout()
-    path_cm = os.path.join(RESULTS_DIR, 'matriz_confusao.png')
+    sufixo = config.get_sufixo_config()
+    path_cm = os.path.join(RESULTS_DIR, f'matriz_confusao{sufixo}.png')
     plt.savefig(path_cm, dpi=150)
     plt.close()
     if config.PRINT_OPTION:
@@ -38,21 +43,25 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, cm_total):
 
     # Graphic of the confusion matrix 2d
     fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+    
+    attr1 = config.ATRIBUTOS[0]
+    attr2 = config.ATRIBUTOS[1] if len(config.ATRIBUTOS) > 1 else "N/A"
+    
     scatter1 = axes[0].scatter(
-        X_test[:, 0], X_test[:, 1],
+        X_test[:, 0], X_test[:, 1] if len(config.ATRIBUTOS) > 1 else np.zeros_like(X_test[:, 0]),
         c=y_test, cmap='Set1', alpha=0.6, s=15, edgecolors='none'
     )
-    axes[0].set_xlabel(ATRIBUTOS[0], fontsize=11)
-    axes[0].set_ylabel(ATRIBUTOS[1], fontsize=11)
+    axes[0].set_xlabel(attr1, fontsize=11)
+    axes[0].set_ylabel(attr2, fontsize=11)
     axes[0].set_title('Classes Reais', fontsize=13, fontweight='bold')
     plt.colorbar(scatter1, ax=axes[0], label='Classe')
 
     scatter2 = axes[1].scatter(
-        X_test[:, 0], X_test[:, 1],
+        X_test[:, 0], X_test[:, 1] if len(config.ATRIBUTOS) > 1 else np.zeros_like(X_test[:, 0]),
         c=y_pred_test, cmap='Set1', alpha=0.6, s=15, edgecolors='none'
     )
-    axes[1].set_xlabel(ATRIBUTOS[0], fontsize=11)
-    axes[1].set_ylabel(ATRIBUTOS[1], fontsize=11)
+    axes[1].set_xlabel(attr1, fontsize=11)
+    axes[1].set_ylabel(attr2, fontsize=11)
     axes[1].set_title('Classes Preditas (Takagi-Sugeno)', fontsize=13, fontweight='bold')
     plt.colorbar(scatter2, ax=axes[1], label='Classe')
 
@@ -65,19 +74,19 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, cm_total):
 
     plt.suptitle('Comparação: Classes Reais vs Preditas', fontsize=14, fontweight='bold', y=1.02)
     plt.tight_layout()
-    path_scatter = os.path.join(RESULTS_DIR, 'dispersao_real_vs_predito.png')
+    path_scatter = os.path.join(RESULTS_DIR, f'dispersao_real_vs_predito{sufixo}.png')
     plt.savefig(path_scatter, dpi=150, bbox_inches='tight')
     plt.close()
     if config.PRINT_OPTION:
         print(f"  [Gráfico] Dispersão real vs predito salva em: {path_scatter}")
 
     # Gaussian membership functions
-    fig, axes = plt.subplots(1, len(ATRIBUTOS), figsize=(6 * len(ATRIBUTOS), 5))
-    if len(ATRIBUTOS) == 1:
+    fig, axes = plt.subplots(1, len(config.ATRIBUTOS), figsize=(6 * len(config.ATRIBUTOS), 5))
+    if len(config.ATRIBUTOS) == 1:
         axes = [axes]
     colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c']
 
-    for d, (ax, attr) in enumerate(zip(axes, ATRIBUTOS)):
+    for d, (ax, attr) in enumerate(zip(axes, config.ATRIBUTOS)):
         x_range = np.linspace(X_test[:, d].min() - 0.5, X_test[:, d].max() + 0.5, 500)
         for i in range(modelo.fcm_.n_clusters):
             center = modelo.fcm_.centers_[i, d]
@@ -97,37 +106,68 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, cm_total):
     plt.suptitle('Funções de Pertinência Gaussianas (derivadas do FCM)',
                  fontsize=14, fontweight='bold', y=1.02)
     plt.tight_layout()
-    path_mf = os.path.join(RESULTS_DIR, 'funcoes_pertinencia.png')
+    path_mf = os.path.join(RESULTS_DIR, f'funcoes_pertinencia{sufixo}.png')
     plt.savefig(path_mf, dpi=150, bbox_inches='tight')
     plt.close()
     if config.PRINT_OPTION:
         print(f"  [Gráfico] Funções de pertinência salvas em: {path_mf}")
 
     # Graphic of the dispersion 3d
-    fig = plt.figure(figsize=(16, 6))
-    ax1 = fig.add_subplot(121, projection='3d')
-    ax1.scatter(X_test[:, 0], X_test[:, 1], X_test[:, 2],
-                c=y_test, cmap='Set1', alpha=0.5, s=10)
-    ax1.set_xlabel(ATRIBUTOS[0]); ax1.set_ylabel(ATRIBUTOS[1]); ax1.set_zlabel(ATRIBUTOS[2])
-    ax1.set_title('Classes Reais (3D)', fontweight='bold')
-    for center in modelo.fcm_.centers_:
-        ax1.scatter(*center[:3], c='black', marker='X', s=100, edgecolors='white', linewidths=1)
+    if X_test.shape[1] >= 3:
+        fig = plt.figure(figsize=(16, 6))
+        ax1 = fig.add_subplot(121, projection='3d')
+        ax1.scatter(X_test[:, 0], X_test[:, 1], X_test[:, 2],
+                    c=y_test, cmap='Set1', alpha=0.5, s=10)
+        ax1.set_xlabel(config.ATRIBUTOS[0]); ax1.set_ylabel(config.ATRIBUTOS[1]); ax1.set_zlabel(config.ATRIBUTOS[2])
+        ax1.set_title('Classes Reais (3D)', fontweight='bold')
+        for center in modelo.fcm_.centers_:
+            if len(center) >= 3:
+                ax1.scatter(*center[:3], c='black', marker='X', s=100, edgecolors='white', linewidths=1)
 
-    ax2 = fig.add_subplot(122, projection='3d')
-    ax2.scatter(X_test[:, 0], X_test[:, 1], X_test[:, 2],
-                c=y_pred_test, cmap='Set1', alpha=0.5, s=10)
-    ax2.set_xlabel(ATRIBUTOS[0]); ax2.set_ylabel(ATRIBUTOS[1]); ax2.set_zlabel(ATRIBUTOS[2])
-    ax2.set_title('Classes Preditas (3D)', fontweight='bold')
-    for center in modelo.fcm_.centers_:
-        ax2.scatter(*center[:3], c='black', marker='X', s=100, edgecolors='white', linewidths=1)
+        ax2 = fig.add_subplot(122, projection='3d')
+        ax2.scatter(X_test[:, 0], X_test[:, 1], X_test[:, 2],
+                    c=y_pred_test, cmap='Set1', alpha=0.5, s=10)
+        ax2.set_xlabel(config.ATRIBUTOS[0]); ax2.set_ylabel(config.ATRIBUTOS[1]); ax2.set_zlabel(config.ATRIBUTOS[2])
+        ax2.set_title('Classes Preditas (3D)', fontweight='bold')
+        for center in modelo.fcm_.centers_:
+            if len(center) >= 3:
+                ax2.scatter(*center[:3], c='black', marker='X', s=100, edgecolors='white', linewidths=1)
 
-    plt.suptitle('Visualização 3D — Real vs Predito', fontsize=14, fontweight='bold')
+        plt.suptitle('Visualização 3D — Real vs Predito', fontsize=14, fontweight='bold')
+        plt.tight_layout()
+        path_3d = os.path.join(RESULTS_DIR, f'dispersao_3d{sufixo}.png')
+        plt.savefig(path_3d, dpi=150, bbox_inches='tight')
+        plt.close()
+        if config.PRINT_OPTION:
+            print(f"  [Gráfico] Dispersão 3D salva em: {path_3d}")
+
+    # Curva ROC AUC
+    fig, ax = plt.subplots(figsize=(8, 6))
+    
+    # Binarize labels for One-vs-Rest
+    y_test_bin = pd.get_dummies(y_test).values
+    
+    for i, cls in enumerate(classes):
+        if i < y_pred_proba_test.shape[1] and i < y_test_bin.shape[1]:
+            fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_pred_proba_test[:, i])
+            roc_auc = auc(fpr, tpr)
+            ax.plot(fpr, tpr, lw=2, label=f'Classe {cls} (AUC = {roc_auc:.2f})')
+        
+    ax.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+    ax.set_xlim([0.0, 1.0])
+    ax.set_ylim([0.0, 1.05])
+    ax.set_xlabel('Taxa de Falsos Positivos', fontsize=11)
+    ax.set_ylabel('Taxa de Verdadeiros Positivos', fontsize=11)
+    ax.set_title('Curva ROC Multi-classe (One-vs-Rest)', fontsize=13, fontweight='bold')
+    ax.legend(loc="lower right")
+    ax.grid(True, alpha=0.3)
+    
     plt.tight_layout()
-    path_3d = os.path.join(RESULTS_DIR, 'dispersao_3d.png')
-    plt.savefig(path_3d, dpi=150, bbox_inches='tight')
+    path_roc = os.path.join(RESULTS_DIR, f'curva_roc{sufixo}.png')
+    plt.savefig(path_roc, dpi=150, bbox_inches='tight')
     plt.close()
     if config.PRINT_OPTION:
-        print(f"  [Gráfico] Dispersão 3D salva em: {path_3d}")
+        print(f"  [Gráfico] Curva ROC salva em: {path_roc}")
 
 # Generate plots for hyperparameter sensitivity analysis
 def plotar_analise_sensibilidade(df_res: pd.DataFrame):
@@ -135,8 +175,8 @@ def plotar_analise_sensibilidade(df_res: pd.DataFrame):
     metricas_plot = [
         ('acuracia', 'Acurácia (micro)', '#3498db'),
         ('acuracia_macro', 'Acurácia (macro)', '#9b59b6'),
-        ('rse', 'RSE', '#e74c3c'),
-        ('rmse', 'RMSE', '#2ecc71'),
+        ('recall', 'Recall', '#e74c3c'),
+        ('auc', 'AUC', '#2ecc71'),
         ('f1_score', 'F1-Score', '#f39c12')
     ]
 
@@ -161,10 +201,11 @@ def plotar_analise_sensibilidade(df_res: pd.DataFrame):
     # Hide the last subplot (since we have 5 plots in a 2x3 grid)
     axes[5].set_visible(False)
 
-    plt.suptitle(f'Análise de Sensibilidade ({N_FOLDS}-Fold CV)',
+    plt.suptitle(f'Análise de Sensibilidade (Holdout 80/20)',
                  fontsize=14, fontweight='bold', y=1.02)
     plt.tight_layout()
-    path_hp = os.path.join(RESULTS_DIR, 'analise_hiperparametros.png')
+    sufixo = config.get_sufixo_config()
+    path_hp = os.path.join(RESULTS_DIR, f'analise_hiperparametros{sufixo}.png')
     plt.savefig(path_hp, dpi=150, bbox_inches='tight')
     plt.close()
     if config.PRINT_OPTION:
@@ -182,13 +223,78 @@ def plotar_analise_sensibilidade(df_res: pd.DataFrame):
     ax.legend(fontsize=10)
     ax.grid(True, alpha=0.3)
 
-    plt.suptitle(f'Comparação Consolidada ({N_FOLDS}-Fold CV)',
+    plt.suptitle(f'Comparação Consolidada (Holdout 80/20)',
                  fontsize=14, fontweight='bold', y=1.02)
     plt.tight_layout()
-    path_cons = os.path.join(RESULTS_DIR, 'comparacao_consolidada.png')
+    path_cons = os.path.join(RESULTS_DIR, f'comparacao_consolidada{sufixo}.png')
     plt.savefig(path_cons, dpi=150, bbox_inches='tight')
     plt.close()
     if config.PRINT_OPTION:
         print(f"  [Gráfico] Comparação consolidada salva em: {path_cons}")
 
+def plotar_dispersao_dados(df: pd.DataFrame, titulo: str, filename: str):
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+    
+    # Pegar as duas primeiras colunas como X e Y
+    cols = [col for col in df.columns if col != COL_CLASSE]
+    if len(cols) < 2:
+        return # Se houver menos de 2 atributos, não plota
+        
+    attr1, attr2 = cols[0], cols[1]
+    
+    fig, ax = plt.subplots(figsize=(8, 6))
+    
+    scatter = ax.scatter(
+        df[attr1], df[attr2],
+        c=df[COL_CLASSE], cmap='Set1', alpha=0.6, s=15, edgecolors='none'
+    )
+    ax.set_xlabel(attr1, fontsize=11)
+    ax.set_ylabel(attr2, fontsize=11)
+    ax.set_title(titulo, fontsize=13, fontweight='bold')
+    plt.colorbar(scatter, ax=ax, label='Classe')
 
+    plt.tight_layout()
+    sufixo = config.get_sufixo_config()
+    path_scatter = os.path.join(RESULTS_DIR, f'{filename}{sufixo}.png')
+    plt.savefig(path_scatter, dpi=150, bbox_inches='tight')
+    plt.close()
+    if config.PRINT_OPTION:
+        print(f"  [Gráfico] Dispersão de dados salva em: {path_scatter}")
+
+def plotar_antes_depois_smote(df_antes: pd.DataFrame, df_depois: pd.DataFrame):
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+    
+    cols = [col for col in df_antes.columns if col != COL_CLASSE]
+    if len(cols) < 2:
+        return # Need at least 2 features to plot 2D scatter
+        
+    attr1, attr2 = cols[0], cols[1]
+    
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+    
+    scatter1 = axes[0].scatter(
+        df_antes[attr1], df_antes[attr2],
+        c=df_antes[COL_CLASSE], cmap='Set1', alpha=0.6, s=15, edgecolors='none'
+    )
+    axes[0].set_xlabel(attr1, fontsize=11)
+    axes[0].set_ylabel(attr2, fontsize=11)
+    axes[0].set_title('Antes do SMOTE-ENN', fontsize=13, fontweight='bold')
+    plt.colorbar(scatter1, ax=axes[0], label='Classe')
+
+    scatter2 = axes[1].scatter(
+        df_depois[attr1], df_depois[attr2],
+        c=df_depois[COL_CLASSE], cmap='Set1', alpha=0.6, s=15, edgecolors='none'
+    )
+    axes[1].set_xlabel(attr1, fontsize=11)
+    axes[1].set_ylabel(attr2, fontsize=11)
+    axes[1].set_title('Depois do SMOTE-ENN', fontsize=13, fontweight='bold')
+    plt.colorbar(scatter2, ax=axes[1], label='Classe')
+
+    plt.suptitle('Comparação: Antes e Depois da aplicação do SMOTE-ENN', fontsize=14, fontweight='bold', y=1.02)
+    plt.tight_layout()
+    
+    path_scatter = os.path.join(RESULTS_DIR, 'dispersao_antes_depois_smote.png')
+    plt.savefig(path_scatter, dpi=150, bbox_inches='tight')
+    plt.close()
+    if config.PRINT_OPTION:
+        print(f"  [Gráfico] Dispersão antes/depois SMOTE salva em: {path_scatter}")

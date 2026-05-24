@@ -1,3 +1,7 @@
 /dataset/base_sintetica_media_preprocessed.csv
+/dataset/base_sintetica_media_preprocessed_corr.csv
+/dataset/base_sintetica_media_preprocessed_sem_smote.csv
+/dataset/base_sintetica_media_preprocessed_sem_smote_corr.csv
 __pycache__
 /venv
+/resultados/*.png
