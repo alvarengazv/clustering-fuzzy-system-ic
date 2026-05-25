@@ -45,13 +45,11 @@ clustering-fuzzy-system-ic/
     ├── datasets/
     │   └── base_sintetica_media.csv
     ├── src/
-    │   ├── data/
-    │   │   ├── loader.py   
-    │   │   └── preprocessing.py            
     │   ├── eda/
-    │   │   └── eda.py               
+    │   │   ├── eda.py   
+    │   │   └── preprocessing.py
     │   ├── models/
-    │   │   ├── fuzzy_cmeans.py            
+    │   │   ├── fuzzy_cmeans.py
     │   │   └── takagi_sugeno.py
     │   ├── utils/
     │   │   ├── metrics.py
@@ -114,6 +112,7 @@ Para instalar o projeto, siga os passos abaixo:
   - seaborn
   - scikit-learn
   - scikit-fuzzy
+  - imblearn
 
 </div>
 
@@ -181,18 +180,16 @@ Para instalar o projeto, siga os passos abaixo:
 
 1. AZEVEDO, Guilherme A. SOUZA, Maria E. T. **CLUSTERING-FUZZY-SYSTEM-IC**: Atividade Prática 01 - Metodologia Experimental. 2026. Disponível em: [https://github.com/alvarengazv/clustering-fuzzy-system-ic](https://github.com/alvarengazv/clustering-fuzzy-system-ic) Acesso em: 31 mar. 2026.
 
-2. Kaggle. **Financial Fraud Detection Dataset — 1M Transactions**. Disponível em: [https://www.kaggle.com/datasets/sergionefedov/fraud-detection-1m-transactions-7-fraud-types](https://www.kaggle.com/datasets/sergionefedov/fraud-detection-1m-transactions-7-fraud-types) Acesso em: 31 mar. 2026.
+2. SILVA, Alisson M. **Inteligência Computacional**: Dados. Slides de Aula. 2026.
 
-3. SILVA, Alisson M. **Inteligência Computacional**: Dados. Slides de Aula. 2026.
+3. SILVA, Alisson M. **Inteligência Computacional**: Metodologia dos Experimentos. Slides de Aula. 2026.
 
-4. SILVA, Alisson M. **Inteligência Computacional**: Metodologia dos Experimentos. Slides de Aula. 2026.
-
-5. SILVA, Alisson M. **Inteligência Computacional**: Notas de Aula 05 - Fuzzy Introdução. 2026.
-6. SILVA, Alisson M. **Inteligência Computacional**: Notas de Aula 06 - Fuzzy Conjuntos. 2026.
-7. SILVA, Alisson M. **Inteligência Computacional**: Notas de Aula 07 - Fuzzy Operações. 2026.
-8. SILVA, Alisson M. **Inteligência Computacional**: Notas de Aula 08 - Fuzzy Inferência 01. 2026.
-9. SILVA, Alisson M. **Inteligência Computacional**: Notas de Aula 09 - Fuzzy Inferência 02. 2026.
-10. SILVA, Alisson M. **Inteligência Computacional**: Notas de Aula 10 - Agrupamento. 2026.
+4. SILVA, Alisson M. **Inteligência Computacional**: Notas de Aula 05 - Fuzzy Introdução. 2026.
+5. SILVA, Alisson M. **Inteligência Computacional**: Notas de Aula 06 - Fuzzy Conjuntos. 2026.
+6. SILVA, Alisson M. **Inteligência Computacional**: Notas de Aula 07 - Fuzzy Operações. 2026.
+7. SILVA, Alisson M. **Inteligência Computacional**: Notas de Aula 08 - Fuzzy Inferência 01. 2026.
+8. SILVA, Alisson M. **Inteligência Computacional**: Notas de Aula 09 - Fuzzy Inferência 02. 2026.
+9. SILVA, Alisson M. **Inteligência Computacional**: Notas de Aula 10 - Agrupamento. 2026.
 
 
 [vscode-badge]: https://img.shields.io/badge/Visual%20Studio%20Code-0078d7.svg?style=for-the-badge&logo=visual-studio-code&logoColor=white
