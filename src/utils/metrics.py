@@ -1,5 +1,4 @@
 import pandas as pd
-# pyrefly: ignore [missing-import]
 import numpy as np
 from sklearn.metrics import (
     accuracy_score, classification_report, confusion_matrix,
@@ -10,17 +9,14 @@ from config import *
 from sklearn.model_selection import train_test_split, StratifiedKFold
 from models.takagi_sugeno import TakagiSugenoClassifier
 
-# Calculate Metrics (Micro, Macro, Recall, AUC, F1-Score)
 def calcular_metricas(y_true, y_pred, y_pred_proba):
     acc = accuracy_score(y_true, y_pred)
     acc_macro = balanced_accuracy_score(y_true, y_pred)
     recall = recall_score(y_true, y_pred, average='weighted', zero_division=0)
     
     try:
-        # AUC com One-vs-Rest para multiclasse
         auc = roc_auc_score(y_true, y_pred_proba, multi_class='ovr')
     except ValueError:
-        # Caso alguma classe não esteja presente no fold/teste
         auc = 0.0
 
     f1 = f1_score(y_true, y_pred, average='weighted', zero_division=0)
@@ -33,7 +29,6 @@ def calcular_metricas(y_true, y_pred, y_pred_proba):
         'f1_score': f1
     }
 
-# Avaliação (Holdout - Treino 80% e Teste 20%)
 def cross_validation(X, y, n_rules=N_RULES, m=M_FUZZ):
     if config.PRINT_OPTION:
         print(f"\n{'='*60}")
@@ -70,7 +65,6 @@ def cross_validation(X, y, n_rules=N_RULES, m=M_FUZZ):
             metricas = calcular_metricas(y_test, y_pred, y_pred_proba)
             metricas_folds.append(metricas)
             
-            # Acumular matriz de confusão
             cm_fold = confusion_matrix(y_test, y_pred, labels=classes)
             if cm_total is None:
                 cm_total = cm_fold
@@ -87,14 +81,12 @@ def cross_validation(X, y, n_rules=N_RULES, m=M_FUZZ):
                 melhor_acc = metricas['acuracia']
                 melhor_modelo = modelo
                 melhor_dados = (X_train, X_test, y_train, y_test, y_pred, y_pred_proba)
-                
-        # Calcular médias e desvios
+               
         df_metricas = pd.DataFrame(metricas_folds)
         medias = df_metricas.mean()
         desvios = df_metricas.std()
         
     else:
-        # --- Holdout (80% treino e 20% teste) ---
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.20, random_state=RANDOM_STATE, stratify=y
         )
@@ -135,7 +127,6 @@ def cross_validation(X, y, n_rules=N_RULES, m=M_FUZZ):
         print(f"    AUC             : {medias['auc']:.4f}" + (f" ± {desvios['auc']:.4f}" if config.METODO_VALIDACAO == 'kfold' else ""))
         print(f"    F1-Score        : {medias['f1_score']:.4f}" + (f" ± {desvios['f1_score']:.4f}" if config.METODO_VALIDACAO == 'kfold' else ""))
 
-    # Relatório e matriz de confusão
     if config.PRINT_OPTION:
         print(f"\n  {'─'*50}")
         print(f"  Relatório de Classificação (Melhor Fold/Modelo):" if config.METODO_VALIDACAO == 'kfold' else "  Relatório de Classificação:")
@@ -149,7 +140,6 @@ def cross_validation(X, y, n_rules=N_RULES, m=M_FUZZ):
         for line in report.split('\n'):
             print(f"  {line}")
 
-        # Matriz de confusão em porcentagem
         cm_pct = cm_total.astype(float)
         cm_pct = cm_pct / cm_pct.sum(axis=1, keepdims=True) * 100
 

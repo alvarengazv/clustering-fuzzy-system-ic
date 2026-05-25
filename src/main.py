@@ -7,13 +7,11 @@ from utils.metrics import *
 from utils.plots import *
 import sys
 
-# Clear the terminal
 def clear_terminal():
     for _ in range(100):
         print()
     os.system('cls' if os.name == 'nt' else 'clear')        
 
-# Option of print 
 def print_option():
     print("\nDeseja imprimir o andamento completo do programa (1) ou apenas as informações principais (2)? ")
     choice = input().strip()  
@@ -27,7 +25,6 @@ def print_option():
         print("Opção inválida!")
         return print_option() 
 
-# Option of SMOTE-ENN
 def smote_option():
     print("\nDeseja aplicar o balanceamento SMOTE-ENN?")
     print("  1 - Sim (Com SMOTE-ENN)")
@@ -45,7 +42,6 @@ def smote_option():
         print("Opção inválida!")
         return smote_option()
 
-# Option of validation method
 def validation_option():
     print("\nEscolha o método de validação:")
     print("  1 - Holdout (Treino 80% / Teste 20%)")
@@ -61,7 +57,6 @@ def validation_option():
         print("Opção inválida!")
         return validation_option()
 
-# Prepare data and handle preprocessing choices
 def preparar_dados_e_preproc():
     if not os.path.exists(config.DATASET_RAW_PATH):
         print(f"O arquivo {config.DATASET_RAW_PATH} não foi encontrado na pasta {config.DATASET_DIR}")
@@ -107,7 +102,6 @@ def preparar_dados_e_preproc():
                 print("\n[Aviso] O arquivo SEM SMOTE-ENN não foi encontrado. Executando pré-processamento...")
                 executar_preprocessing()
 
-# Loading dataset and separate X and y
 def carregar_dados():
     if config.PRINT_OPTION:
         print(f"\n{'='*60}")
@@ -126,14 +120,12 @@ def carregar_dados():
             n = (df[COL_CLASSE] == cls).sum()
             print(f"    Classe {cls}: {n:>5,} ({n/len(df)*100:.1f}%)")
 
-    # Update config.ATRIBUTOS dynamically based on the dataset
     config.ATRIBUTOS = [c for c in df.columns if c != COL_CLASSE]
 
     X = df[config.ATRIBUTOS].values
     y = df[COL_CLASSE].values
     return X, y, df
 
-# Option of Correlation
 def correlacao_option():
     print("\nDeseja remover atributos com alta correlação (Pearson > 0.8)?")
     print("  1 - Não (Manter todos)")
@@ -149,7 +141,6 @@ def correlacao_option():
         print("Opção inválida!")
         return correlacao_option()
 
-# Option of execution mode
 def modo_execucao_option():
     print("\nEscolha o modo de execução:")
     print("  1 - Interativo (Escolher 1 configuração de pré-processamento e validação)")
@@ -164,25 +155,17 @@ def modo_execucao_option():
         return modo_execucao_option()
 
 def executar_pipeline(modo_lote=False):
-    # Loading data
     X, y, df = carregar_dados()
-
-    # Cross-validation with default parameters
     medias, desvios, modelo, melhor_dados, cm_total = cross_validation(X, y)
 
     X_train, X_test, y_train, y_test, y_pred_test, y_pred_proba_test = melhor_dados
 
-    # Print rules if not in batch mode or if print option is enabled
     if not modo_lote or config.PRINT_OPTION:
         modelo.print_rules(feature_names=config.ATRIBUTOS)
 
-    # Generating plots
     plotar_resultados(modelo, X_test, y_test, y_pred_test, y_pred_proba_test, cm_total)
-
-    # Sensitivity analysis with CV
     df_resultados = experimentar_hiperparametros(X, y)
 
-    # Final summary
     if not modo_lote or config.PRINT_OPTION:
         print(f"\n{'═'*60}")
         print(f"  RESUMO FINAL")
@@ -220,9 +203,7 @@ def salvar_resultados_consolidados(resultados_lista):
     df_res.to_csv(path_csv, index=False)
     print(f"\n[Sucesso] Resultados consolidados salvos em: {path_csv}")
 
-# Main function
 def main():
-    # Clear the terminal
     clear_terminal()
     
     print("\n" + "═" * 60)
@@ -232,36 +213,26 @@ def main():
     modo = modo_execucao_option()
     
     if modo == 'interativo':
-        # Option of print
         print_option()
-
-        # Prepare data and handle preprocessing choices (re-runs or selects existing)
         preparar_dados_e_preproc()
-        
-        # Option of correlation
         correlacao_option()
         
-        # Re-run preprocessing if correlation option changes
         if config.REMOVER_CORRELACIONADOS:
             executar_preprocessing()
 
-        # Option of Validation method
         validation_option()
 
-        # EDA
         eda_option()
 
         if config.PRINT_OPTION:
-            # Clear the terminal again if we want to clean up prompts
             clear_terminal()
 
         res = executar_pipeline(modo_lote=False)
         salvar_resultados_consolidados([res])
         
     else:
-        # Batch Mode
         print("\nIniciando execução em LOTE para as 8 configurações...")
-        config.PRINT_OPTION = False # Desativa prints extensos no modo lote por padrão
+        config.PRINT_OPTION = False 
         
         resultados_totais = []
         
@@ -289,7 +260,6 @@ def main():
                 
             config.DATASET_PREPROCESSED_PATH = os.path.join(config.DATASET_DIR, f'base_sintetica_media_preprocessed{sufixo_dataset}.csv')
             
-            # Generate dataset for this specific combination if it doesn't exist
             if not os.path.exists(config.DATASET_PREPROCESSED_PATH):
                 executar_preprocessing()
                 

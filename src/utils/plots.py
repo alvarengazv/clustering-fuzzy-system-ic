@@ -1,7 +1,5 @@
-# pyrefly: ignore [missing-import]
 import numpy as np
 import pandas as pd
-# pyrefly: ignore [missing-import]
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
@@ -9,14 +7,12 @@ from config import *
 import config
 from sklearn.metrics import roc_curve, auc
 
-# Generate plots for analysis
 def plotar_resultados(modelo, X_test, y_test, y_pred_test, y_pred_proba_test, cm_total):
     os.makedirs(RESULTS_DIR, exist_ok=True)
 
     classes = sorted(np.unique(y_test))
     class_labels = [f"Classe {c}" for c in classes]
 
-    # Graphic of the confusion matrix
     cm_pct = cm_total.astype(float)
     cm_pct = cm_pct / cm_pct.sum(axis=1, keepdims=True) * 100
 
@@ -41,7 +37,6 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, y_pred_proba_test, cm
     if config.PRINT_OPTION:
         print(f"\n  [Gráfico] Matriz de confusão salva em: {path_cm}")
 
-    # Graphic of the confusion matrix 2d
     fig, axes = plt.subplots(1, 2, figsize=(16, 6))
     
     attr1 = config.ATRIBUTOS[0]
@@ -80,7 +75,6 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, y_pred_proba_test, cm
     if config.PRINT_OPTION:
         print(f"  [Gráfico] Dispersão real vs predito salva em: {path_scatter}")
 
-    # Gaussian membership functions
     fig, axes = plt.subplots(1, len(config.ATRIBUTOS), figsize=(6 * len(config.ATRIBUTOS), 5))
     if len(config.ATRIBUTOS) == 1:
         axes = [axes]
@@ -112,7 +106,6 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, y_pred_proba_test, cm
     if config.PRINT_OPTION:
         print(f"  [Gráfico] Funções de pertinência salvas em: {path_mf}")
 
-    # Graphic of the dispersion 3d
     if X_test.shape[1] >= 3:
         fig = plt.figure(figsize=(16, 6))
         ax1 = fig.add_subplot(121, projection='3d')
@@ -141,10 +134,8 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, y_pred_proba_test, cm
         if config.PRINT_OPTION:
             print(f"  [Gráfico] Dispersão 3D salva em: {path_3d}")
 
-    # Curva ROC AUC
     fig, ax = plt.subplots(figsize=(8, 6))
     
-    # Binarize labels for One-vs-Rest
     y_test_bin = pd.get_dummies(y_test).values
     
     for i, cls in enumerate(classes):
@@ -169,7 +160,6 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, y_pred_proba_test, cm
     if config.PRINT_OPTION:
         print(f"  [Gráfico] Curva ROC salva em: {path_roc}")
 
-# Generate plots for hyperparameter sensitivity analysis
 def plotar_analise_sensibilidade(df_res: pd.DataFrame):
     os.makedirs(RESULTS_DIR, exist_ok=True)
     metricas_plot = [
@@ -198,7 +188,6 @@ def plotar_analise_sensibilidade(df_res: pd.DataFrame):
         ax.legend(fontsize=9)
         ax.grid(True, alpha=0.3)
 
-    # Hide the last subplot (since we have 5 plots in a 2x3 grid)
     axes[5].set_visible(False)
 
     plt.suptitle(f'Análise de Sensibilidade (Holdout 80/20)',
@@ -211,7 +200,6 @@ def plotar_analise_sensibilidade(df_res: pd.DataFrame):
     if config.PRINT_OPTION:
         print(f"\n  [Gráfico] Análise de hiperparâmetros salva em: {path_hp}")
 
-    # Consolidated chart: all metrics vs m
     fig, ax = plt.subplots(figsize=(10, 6))
 
     for col, label, color in metricas_plot:
@@ -235,10 +223,9 @@ def plotar_analise_sensibilidade(df_res: pd.DataFrame):
 def plotar_dispersao_dados(df: pd.DataFrame, titulo: str, filename: str):
     os.makedirs(RESULTS_DIR, exist_ok=True)
     
-    # Pegar as duas primeiras colunas como X e Y
     cols = [col for col in df.columns if col != COL_CLASSE]
     if len(cols) < 2:
-        return # Se houver menos de 2 atributos, não plota
+        return
         
     attr1, attr2 = cols[0], cols[1]
     
@@ -266,7 +253,7 @@ def plotar_antes_depois_smote(df_antes: pd.DataFrame, df_depois: pd.DataFrame):
     
     cols = [col for col in df_antes.columns if col != COL_CLASSE]
     if len(cols) < 2:
-        return # Need at least 2 features to plot 2D scatter
+        return
         
     attr1, attr2 = cols[0], cols[1]
     

@@ -1,4 +1,3 @@
-# pyrefly: ignore [missing-import]
 import numpy as np
 import pandas as pd
 import os
@@ -7,7 +6,6 @@ from config import *
 from utils.metrics import *
 from utils.plots import plotar_analise_sensibilidade
 
-# Analysis of the hyperparameter sensitivity
 def experimentar_hiperparametros(X, y):
     original_print_option = config.PRINT_OPTION
     
@@ -23,7 +21,6 @@ def experimentar_hiperparametros(X, y):
         print(f"    {'m':>7} | {'Acc micro':>10} | {'Acc macro':>10} | {'Recall':>10} | {'AUC':>10} | {'F1':>10}")
         print(f"    {'─'*60}")
     
-    # Turn it off for the loop
     config.PRINT_OPTION = False
     
     resultados = []
@@ -41,11 +38,9 @@ def experimentar_hiperparametros(X, y):
         if original_print_option:
             print(f"    {m_val:>7.1f} | {m['acuracia']:>10.4f} | {m['acuracia_macro']:>10.4f} | {m['recall']:>10.4f} | "
                   f"{m['auc']:>10.4f} | {m['f1_score']:>10.4f}")
-              
-    # Restore print option
+         
     config.PRINT_OPTION = original_print_option
 
-    # Plotar resultados
     df_res = pd.DataFrame(resultados)
     plotar_analise_sensibilidade(df_res)
 
