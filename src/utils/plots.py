@@ -75,12 +75,19 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, y_pred_proba_test, cm
     if config.PRINT_OPTION:
         print(f"  [Gráfico] Dispersão real vs predito salva em: {path_scatter}")
 
-    fig, axes = plt.subplots(1, len(config.ATRIBUTOS), figsize=(6 * len(config.ATRIBUTOS), 5))
-    if len(config.ATRIBUTOS) == 1:
-        axes = [axes]
+    num_attrs = len(config.ATRIBUTOS)
+    cols = min(3, num_attrs) if num_attrs > 0 else 1
+    rows = (num_attrs + cols - 1) // cols if num_attrs > 0 else 1
+    
+    fig, axes = plt.subplots(rows, cols, figsize=(6 * cols, 5 * rows))
+    if rows * cols == 1:
+        axes_flat = [axes]
+    else:
+        axes_flat = axes.flatten()
+
     colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c']
 
-    for d, (ax, attr) in enumerate(zip(axes, config.ATRIBUTOS)):
+    for d, (ax, attr) in enumerate(zip(axes_flat, config.ATRIBUTOS)):
         x_range = np.linspace(X_test[:, d].min() - 0.5, X_test[:, d].max() + 0.5, 500)
         for i in range(modelo.fcm_.n_clusters):
             center = modelo.fcm_.centers_[i, d]
@@ -96,6 +103,9 @@ def plotar_resultados(modelo, X_test, y_test, y_pred_test, y_pred_proba_test, cm
         ax.legend(fontsize=8, loc='best')
         ax.set_ylim(-0.05, 1.1)
         ax.grid(True, alpha=0.3)
+        
+    for i in range(num_attrs, rows * cols):
+        axes_flat[i].set_visible(False)
 
     plt.suptitle('Funções de Pertinência Gaussianas (derivadas do FCM)',
                  fontsize=14, fontweight='bold', y=1.02)
